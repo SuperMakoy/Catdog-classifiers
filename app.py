@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 import cv2
 import numpy as np
 import joblib
+import os
 from skimage.feature import graycomatrix, graycoprops, local_binary_pattern, hog
 from scipy.stats import skew, kurtosis
 from skimage.measure import shannon_entropy
@@ -96,4 +97,5 @@ def predict_route():
     return jsonify(result)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
