@@ -1,178 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cat vs Dog Classifier</title>
+  <title>Cat or Dog? 🐾</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #f0f2f5;
+      background: #fdf6fb;
       min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      padding: 2rem;
+      padding: 2rem 1rem;
     }
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      max-width: 460px; width: 100%;
-      overflow: hidden;
-    }
-    .header {
-      background: #1a1a2e;
-      padding: 2rem;
-      text-align: center;
-    }
-    .header h1 { color: #fff; font-size: 22px; font-weight: 600; }
-    .header p  { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 6px; }
-    .body { padding: 1.5rem; }
+    .page { max-width: 520px; margin: 0 auto; }
+
+    .hero { text-align: center; padding: 2rem 0 1.5rem; }
+    .hero-emoji { font-size: 52px; display: block; margin-bottom: 12px; }
+    .hero h1 { font-size: 28px; font-weight: 700; color: #7c3aed; letter-spacing: -0.5px; }
+    .hero p  { font-size: 14px; color: #a78bfa; margin-top: 6px; }
 
     .drop-zone {
-      border: 2px dashed #d1d5db;
-      border-radius: 12px;
+      background: #fff;
+      border-radius: 24px;
+      border: 2px dashed #ddd6fe;
       padding: 2.5rem 1rem;
       text-align: center;
       cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
+      transition: border-color 0.2s, background 0.2s;
     }
-    .drop-zone:hover { background: #f9fafb; border-color: #9ca3af; }
-    .drop-icon { font-size: 32px; margin-bottom: 10px; }
-    .drop-label { font-size: 14px; color: #374151; font-weight: 500; }
-    .drop-sub   { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+    .drop-zone:hover, .drop-zone.dragging { border-color: #a78bfa; background: #faf5ff; }
+    .drop-icon  { font-size: 38px; margin-bottom: 10px; }
+    .drop-title { font-size: 15px; font-weight: 600; color: #6d28d9; }
+    .drop-sub   { font-size: 12px; color: #c4b5fd; margin-top: 4px; }
 
     .preview-wrap {
-      display: none; margin-top: 1rem;
-      border-radius: 10px; overflow: hidden; position: relative;
+      display: none;
+      margin-top: 1.25rem;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      background: #f3f0ff;
     }
     .preview-wrap img { width: 100%; max-height: 240px; object-fit: cover; display: block; }
-    .change-btn {
-      position: absolute; top: 8px; right: 8px;
-      background: rgba(0,0,0,0.55); color: #fff;
-      font-size: 11px; padding: 4px 10px;
-      border-radius: 20px; border: none; cursor: pointer;
+    .change-pill {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(109,40,217,0.75); color: #fff;
+      font-size: 11px; font-weight: 600;
+      padding: 5px 14px; border-radius: 99px;
+      border: none; cursor: pointer;
     }
 
     .classify-btn {
-      width: 100%; margin-top: 1rem;
-      padding: 12px; background: #1a1a2e; color: #fff;
-      border: none; border-radius: 10px;
-      font-size: 15px; font-weight: 600; cursor: pointer;
-      transition: opacity 0.2s;
+      width: 100%; margin-top: 1.25rem;
+      padding: 14px;
+      background: linear-gradient(135deg, #a78bfa, #ec4899);
+      color: #fff; border: none;
+      border-radius: 99px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
     }
-    .classify-btn:hover  { opacity: 0.88; }
-    .classify-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .classify-btn:hover  { opacity: 0.9; transform: translateY(-1px); }
+    .classify-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
-    .spinner {
-      display: none; margin: 1rem auto 0;
-      width: 24px; height: 24px;
-      border: 3px solid #e5e7eb;
-      border-top-color: #1a1a2e;
-      border-radius: 50%;
-      animation: spin 0.65s linear infinite;
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 1.5rem 0;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .paw-bounce { font-size: 26px; animation: bounce 0.55s infinite alternate; }
+    @keyframes bounce { to { transform: translateY(-7px); } }
+    .loading-text { font-size: 13px; color: #a78bfa; margin-top: 8px; }
 
     .result {
-      display: none; margin-top: 1rem;
-      background: #f9fafb; border: 1px solid #e5e7eb;
-      border-radius: 12px; padding: 1.5rem;
+      display: none;
+      margin-top: 1.25rem;
+    }
+    .result-banner {
+      border-radius: 20px;
+      padding: 1.75rem;
       text-align: center;
     }
-    .result-emoji { font-size: 48px; margin-bottom: 6px; }
-    .result-label { font-size: 24px; font-weight: 700; color: #111827; }
-    .result-conf  { font-size: 13px; color: #6b7280; margin-top: 4px; }
-    .bar-wrap { margin-top: 12px; background: #e5e7eb; border-radius: 99px; height: 6px; }
-    .bar      { height: 6px; border-radius: 99px; background: #1a1a2e; transition: width 0.6s ease; }
+    .result-banner.cat { background: #fdf4ff; border: 1.5px solid #e9d5ff; }
+    .result-banner.dog { background: #fff7ed; border: 1.5px solid #fed7aa; }
+    .result-emoji { font-size: 56px; margin-bottom: 8px; }
+    .result-label { font-size: 24px; font-weight: 700; }
+    .result-label.cat { color: #7c3aed; }
+    .result-label.dog { color: #ea580c; }
+    .result-conf  { font-size: 13px; color: #9ca3af; margin-top: 6px; }
 
-    .error { display: none; margin-top: 0.75rem; color: #dc2626; font-size: 13px; text-align: center; }
+    .bars { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 12px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-lbl  { font-size: 16px; width: 28px; text-align: center; }
+    .bar-track { flex: 1; height: 10px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 99px; width: 0%; transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+    .bar-fill.cat { background: #a78bfa; }
+    .bar-fill.dog { background: #fb923c; }
+    .bar-pct { font-size: 12px; font-weight: 600; width: 34px; text-align: right; color: #6b7280; }
+
+    .try-again {
+      display: block; margin: 1rem auto 0;
+      font-size: 13px; color: #a78bfa;
+      text-decoration: underline;
+      background: none; border: none; cursor: pointer;
+    }
+
+    .footer { text-align: center; padding: 2rem 0 0; font-size: 12px; color: #c4b5fd; }
   </style>
 </head>
 <body>
-<div class="card">
-  <div class="header">
-    <h1>🐶 Cat vs Dog Classifier 🐱</h1>
-    <p>Upload a photo and let the model decide</p>
+<div class="page">
+
+  <div class="hero">
+    <span class="hero-emoji">🐾</span>
+    <h1>Cat or Dog?</h1>
+    <p>Drop a photo and we'll figure it out</p>
   </div>
-  <div class="body">
-    <div class="drop-zone" id="dropZone" onclick="fileInput.click()">
-      <div class="drop-icon">📷</div>
-      <div class="drop-label">Click to upload an image</div>
-      <div class="drop-sub">JPG, PNG, WEBP supported</div>
-    </div>
-    <input type="file" id="fileInput" accept="image/*" style="display:none">
 
-    <div class="preview-wrap" id="previewWrap">
-      <img id="previewImg" src="" alt="Preview">
-      <button class="change-btn" onclick="fileInput.click()">Change</button>
-    </div>
+  <div class="drop-zone" id="dropZone" onclick="fileInput.click()">
+    <div class="drop-icon">📸</div>
+    <div class="drop-title">Click or drag an image here</div>
+    <div class="drop-sub">JPG · PNG · WEBP supported</div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" style="display:none">
 
-    <button class="classify-btn" id="classifyBtn" disabled onclick="classify()">
-      Classify Image
-    </button>
+  <div class="preview-wrap" id="previewWrap">
+    <img id="previewImg" src="" alt="preview">
+    <button class="change-pill" onclick="fileInput.click()">change</button>
+  </div>
 
-    <div class="spinner" id="spinner"></div>
-    <div class="error"   id="errorMsg"></div>
+  <button class="classify-btn" id="classifyBtn" disabled onclick="classify()">
+    ✨ Classify!
+  </button>
 
-    <div class="result" id="result">
+  <div class="loading" id="loading">
+    <div class="paw-bounce">🐾</div>
+    <div class="loading-text">Sniffing around...</div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-banner" id="resultBanner">
       <div class="result-emoji" id="rEmoji"></div>
       <div class="result-label" id="rLabel"></div>
       <div class="result-conf"  id="rConf"></div>
-      <div class="bar-wrap"><div class="bar" id="rBar" style="width:0%"></div></div>
     </div>
+    <div class="bars">
+      <div class="bar-row">
+        <span class="bar-lbl">🐱</span>
+        <div class="bar-track"><div class="bar-fill cat" id="catBar"></div></div>
+        <span class="bar-pct" id="catPct">0%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">🐶</span>
+        <div class="bar-track"><div class="bar-fill dog" id="dogBar"></div></div>
+        <span class="bar-pct" id="dogPct">0%</span>
+      </div>
+    </div>
+    <button class="try-again" onclick="reset()">Try another photo</button>
   </div>
+
+  <div class="footer">made with 💜 · powered by Random Forest</div>
 </div>
 
 <script>
-  const fileInput   = document.getElementById('fileInput');
-  const previewWrap = document.getElementById('previewWrap');
-  const previewImg  = document.getElementById('previewImg');
-  const classifyBtn = document.getElementById('classifyBtn');
-  const spinner     = document.getElementById('spinner');
-  const resultBox   = document.getElementById('result');
-  const errorMsg    = document.getElementById('errorMsg');
+  const dropZone   = document.getElementById('dropZone');
+  const fileInput  = document.getElementById('fileInput');
+  const previewWrap= document.getElementById('previewWrap');
+  const previewImg = document.getElementById('previewImg');
+  const classifyBtn= document.getElementById('classifyBtn');
+  const loading    = document.getElementById('loading');
+  const result     = document.getElementById('result');
 
-  fileInput.addEventListener('change', e => {
-    const file = e.target.files[0];
+  fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('dragging');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+
+  function loadFile(file) {
     if (!file) return;
+    const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
     previewImg.src = URL.createObjectURL(file);
     previewWrap.style.display = 'block';
     classifyBtn.disabled = false;
-    resultBox.style.display = 'none';
-    errorMsg.style.display  = 'none';
-  });
+    result.style.display = 'none';
+  }
 
   async function classify() {
-    const file = fileInput.files[0];
-    if (!file) return;
+    const file = fileInput.files[0]; if (!file) return;
+    classifyBtn.style.display = 'none';
+    loading.style.display = 'block';
+    result.style.display  = 'none';
 
-    classifyBtn.disabled = true;
-    spinner.style.display = 'block';
-    resultBox.style.display = 'none';
-    errorMsg.style.display  = 'none';
-
-    const form = new FormData();
-    form.append('file', file);
+    const form = new FormData(); form.append('file', file);
 
     try {
       const res  = await fetch('/predict', { method: 'POST', body: form });
       const data = await res.json();
-
       if (data.error) throw new Error(data.error);
 
+      const isCat = data.label === 'Cat';
+      const catP  = isCat ? Math.round(data.confidence) : 100 - Math.round(data.confidence);
+      const dogP  = 100 - catP;
+
+      document.getElementById('resultBanner').className = 'result-banner ' + (isCat ? 'cat' : 'dog');
       document.getElementById('rEmoji').textContent = data.emoji;
-      document.getElementById('rLabel').textContent = data.label;
-      document.getElementById('rConf').textContent  = `${data.confidence}% confidence`;
-      document.getElementById('rBar').style.width   = data.confidence + '%';
-      resultBox.style.display = 'block';
+      const lbl = document.getElementById('rLabel');
+      lbl.textContent = "It's a " + data.label + "!";
+      lbl.className = 'result-label ' + (isCat ? 'cat' : 'dog');
+      document.getElementById('rConf').textContent = Math.round(data.confidence) + '% confidence';
+
+      loading.style.display = 'none';
+      result.style.display  = 'block';
+
+      setTimeout(() => {
+        document.getElementById('catBar').style.width = catP + '%';
+        document.getElementById('dogBar').style.width = dogP + '%';
+        document.getElementById('catPct').textContent = catP + '%';
+        document.getElementById('dogPct').textContent = dogP + '%';
+      }, 80);
+
     } catch (err) {
-      errorMsg.textContent    = '⚠️ Error: ' + err.message;
-      errorMsg.style.display  = 'block';
-    } finally {
-      spinner.style.display   = 'none';
-      classifyBtn.disabled    = false;
+      loading.style.display = 'none';
+      classifyBtn.style.display = 'block';
+      classifyBtn.disabled = false;
+      alert('Oops! ' + err.message);
     }
+  }
+
+  function reset() {
+    fileInput.value = '';
+    previewWrap.style.display = 'none';
+    result.style.display = 'none';
+    classifyBtn.style.display = 'block';
+    classifyBtn.disabled = true;
+    document.getElementById('catBar').style.width = '0%';
+    document.getElementById('dogBar').style.width = '0%';
   }
 </script>
 </body>
