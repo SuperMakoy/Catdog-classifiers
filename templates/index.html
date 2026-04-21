@@ -72,15 +72,8 @@
     @keyframes bounce { to { transform: translateY(-7px); } }
     .loading-text { font-size: 13px; color: #a78bfa; margin-top: 8px; }
 
-    .result {
-      display: none;
-      margin-top: 1.25rem;
-    }
-    .result-banner {
-      border-radius: 20px;
-      padding: 1.75rem;
-      text-align: center;
-    }
+    .result { display: none; margin-top: 1.25rem; }
+    .result-banner { border-radius: 20px; padding: 1.75rem; text-align: center; }
     .result-banner.cat { background: #fdf4ff; border: 1.5px solid #e9d5ff; }
     .result-banner.dog { background: #fff7ed; border: 1.5px solid #fed7aa; }
     .result-emoji { font-size: 56px; margin-bottom: 8px; }
@@ -163,13 +156,13 @@
 </div>
 
 <script>
-  const dropZone   = document.getElementById('dropZone');
-  const fileInput  = document.getElementById('fileInput');
-  const previewWrap= document.getElementById('previewWrap');
-  const previewImg = document.getElementById('previewImg');
-  const classifyBtn= document.getElementById('classifyBtn');
-  const loading    = document.getElementById('loading');
-  const result     = document.getElementById('result');
+  const dropZone    = document.getElementById('dropZone');
+  const fileInput   = document.getElementById('fileInput');
+  const previewWrap = document.getElementById('previewWrap');
+  const previewImg  = document.getElementById('previewImg');
+  const classifyBtn = document.getElementById('classifyBtn');
+  const loading     = document.getElementById('loading');
+  const result      = document.getElementById('result');
 
   fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
 
@@ -186,8 +179,10 @@
     const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
     previewImg.src = URL.createObjectURL(file);
     previewWrap.style.display = 'block';
+    classifyBtn.style.display = 'block';
     classifyBtn.disabled = false;
     result.style.display = 'none';
+    loading.style.display = 'none';
   }
 
   async function classify() {
@@ -236,10 +231,13 @@
     fileInput.value = '';
     previewWrap.style.display = 'none';
     result.style.display = 'none';
+    loading.style.display = 'none';
     classifyBtn.style.display = 'block';
     classifyBtn.disabled = true;
     document.getElementById('catBar').style.width = '0%';
     document.getElementById('dogBar').style.width = '0%';
+    document.getElementById('catPct').textContent = '0%';
+    document.getElementById('dogPct').textContent = '0%';
   }
 </script>
 </body>
